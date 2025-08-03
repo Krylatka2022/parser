@@ -7,39 +7,59 @@ from datetime import datetime
 DEPOT_SLUGS = {
     'санкт-петербург': 'spb',
     'москва': 'moscow',
-    'великий новгород': 'veliky_novgorod',
-    'выборг': 'vyborg',
+    # 'выборг': #нет slug
     'псков': 'pskov',
     'мурманск': 'murmansk',
-    'кириши': 'kirishi'
+    'казань': 'kazan',
+    'сочи': 'sochi',
+    'ростов-на-дону': 'rostov-na-donu',
+    'кириши': 'kirishi',
+    'екатеринбург': 'ekaterinburg',
+    'новосибирск': 'novosibirsk-all',
+    'краснодар': 'krasnodar',
+    'уфа': 'ufa',
+    'красноярск': 'krasnoyarsk-all',
+    'владивосток': 'vladivostok',
+    'рыбинск': 'rybinsk',
+    'великий новгород': 'v-novgorod-sksavto',
+    # 'нижний новгород': #нет slug
+    'рыбинск': 'rybinsk',
+    'волгоград': 'volgograd',
+    'воронеж': 'voronezh',
+    'смоленск': 'smolensk',
+    'брянск': 'braynsk',
+    'весьегонск': 'vesiegonsk',
+    'кострома': 'kostroma',
+    'ярославль': 'yaroslavl',
 }
 
-# --- Словарь ID направлений ---
-STATION_IDS = {
-    ('moscow', 'санкт-петербург'): 128713,
-    ('spb', 'москва'): 5107,
-    ('moscow', 'казань'): 85833, # только из Москвы на e-traffic
-    ('moscow', 'сочи'): 42622, # только из Москвы на e-traffic
-    ('spb', 'ростов-на-дону'): 3536,
-    ('kirishi', 'санкт-петербург'): 128713, #только из Кириши на e-traffic
-    ('moscow', 'екатеринбург'): 0000, #Нет на e-traffic
-    ('moscow', 'новосибирск'): 0000, #Нет на e-traffic
-    ('moscow', 'краснодар'): 131120, # только из Москвы на e-traffic
-    ('moscow', 'уфа'): 8972, # только из Москвы на e-traffic
-    ('moscow', 'красноярск'): 0000, #Нет на e-traffic
-    ('moscow', 'владивосток'): 0000, #Нет на e-traffic
-    ('moscow', 'рыбинск'): 57765, # только из Москвы на e-traffic
-    ('spb', 'великий новгород'): 22937, # только из СПб на e-traffic
-    ('moscow', 'нижний новгород'): 125662, # только из Москвы на e-traffic
-    ('moscow', 'волгоград'): 41054, # только из Москвы на e-traffic
-    ('moscow', 'воронеж'): 86502,  # только из Москвы на e-traffic
-    ('spb', 'смоленск'): 32828,
-    ('moscow', 'брянск'): 83646,  # только из Москвы на e-traffic
-    ('spb', 'весьегонск'): 74988,
-    ('moscow', 'кострома'): 54300,  # только из Москвы на e-traffic
-    ('moscow', 'ярославль'): 3298,  # только из Москвы на e-traffic
+# --- УНИВЕРСАЛЬНЫЙ СЛОВАРЬ: ID направлений по названию города ---
+# Ключ — нормализованное название города, значение — ID на e-traffic.ru
+# Направление "куда" всегда имеет фиксированный ID
+CITY_TO_STATION_ID = {
+    'санкт-петербург': 128713,
+    'москва': 5107,
+    'казань': 85833, # только из Москвы на e-traffic
+    'сочи': 42622, # только из Москвы на e-traffic
+    'ростов-на-дону': 3536,
+    'кириши': 0, # Нет на e-traffic из Москвы и СПб
+    'екатеринбург': 0,  # Нет на e-traffic из Москвы и СПб
+    'новосибирск': 0,   # Нет на e-traffic
+    'краснодар': 131120, # только из Москвы на e-traffic
+    'уфа': 8972, # только из Москвы на e-traffic
+    'красноярск': 0,    # Нет на e-traffic
+    'владивосток': 0,   # Нет на e-traffic
+    'рыбинск': 57765, # только из Москвы на e-traffic
+    'великий новгород': 22937, # только из СПб на e-traffic
+    'нижний новгород': 125662, # только из Москвы на e-traffic
+    'волгоград': 41054, # только из Москвы на e-traffic
+    'воронеж': 86502, # только из Москвы на e-traffic
+    'смоленск': 32828,
+    'брянск': 83646, # только из Москвы на e-traffic
+    'весьегонск': 74988,
+    'кострома': 54300, # только из Москвы на e-traffic
+    'ярославль': 3298, # только из Москвы на e-traffic
 }
-
 def normalize_city_name(name: str) -> str:
     cleaned = re.split(r'\s*[*]+', name.strip())[0].lower()
     replacements = {
@@ -60,9 +80,15 @@ def parse_e_traffic(date: str, from_city: str, to_city: str) -> list[dict]:
         print(f"❌ Не найден slug для города отправления: {from_city}")
         return results
 
-    station_id = STATION_IDS.get((depot_slug, to_city_norm))
+     # Получаем ID направления "куда"
+    station_id = CITY_TO_STATION_ID.get(to_city_norm)
     if not station_id:
-        print(f"❌ Неизвестно ID направления: {from_city} → {to_city}")
+        print(f"❌ Неизвестно ID направления: {to_city}")
+        print(f"Доступные направления: {list(CITY_TO_STATION_ID.keys())}")
+        return results
+
+    if station_id == 0:
+        print(f"ℹ️ Направление {from_city} → {to_city} не поддерживается на e-traffic.ru")
         return results
 
     try:
