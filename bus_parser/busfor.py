@@ -21,11 +21,11 @@ def get_city_ids():
         'сочи': 4575,
         'ростов-на-дону': 4456,
         'кириши': 7753,
-        'екатеринбург': 3689,
-        'новосибирск': 5096,
+        'екатеринбург': 3689, # Нет на Busfor
+        'новосибирск': 5096, # Нет на Busfor
         'краснодар': 3935,
         'уфа': 4718,
-        'красноярск': 5061,
+        'красноярск': 5061, # Нет на Busfor
         'владивосток': 2341,
         'рыбинск': 5127,
         'великий новгород': 3474,
@@ -35,8 +35,8 @@ def get_city_ids():
         'смоленск': 4556,
         'брянск': 3436,
         'весьегонск': 5201,
-        'кострома': 3915,
-        'ярославль': 4863,
+        'кострома': 3915, # Только из Москвы на Busfor
+        'ярославль': 4863, # Только из Москвы на Busfor
     }
 
 # --- НЕ МЕНЯЕМ: Функция извлечения номера рейса ---
@@ -188,7 +188,8 @@ def parse_busfor(date, from_city, to_city):
             print("Загрузка главной страницы...")
             page.goto("https://busfor.ru/")
             # Используем page.wait_for_timeout вместо time.sleep для совместимости
-            page.wait_for_timeout(random.uniform(2000, 4000))
+            # page.wait_for_timeout(random.uniform(2000, 4000))
+            page.wait_for_timeout(1000)
 
             # 2. Переход к результатам поиска
             print("Переход к результатам поиска...")
@@ -276,12 +277,13 @@ def parse_busfor(date, from_city, to_city):
                             # Лучше дождаться появления элемента внутри деталей
                             try:
                                 # Ждем появления любого элемента внутри Details
-                                ticket_element.wait_for_selector("[class*='Details'] *", timeout=5000)
+                                ticket_element.wait_for_selector("[class*='Details'] *", timeout=3000)
                                 print(f"    Детали для билета {i + 1} загружены.")
                             except:
                                 print(f"    Таймаут ожидания деталей для билета {i + 1}, продолжаем...")
                             # Или короткий фиксированный таймаут
-                            page.wait_for_timeout(random.uniform(800, 1500))
+                            # page.wait_for_timeout(random.uniform(800, 1500))
+                            page.wait_for_timeout(500)
                         else:
                             print(f"  Детали для билета {i + 1} уже открыты или кнопка неактивна.")
                     # else:
@@ -509,3 +511,4 @@ def parse_busfor(date, from_city, to_city):
         traceback.print_exc()
 
     return results
+
