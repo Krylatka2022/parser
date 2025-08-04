@@ -31,6 +31,8 @@ DEPOT_SLUGS = {
     'весьегонск': 'vesiegonsk',
     'кострома': 'kostroma',
     'ярославль': 'yaroslavl',
+    'псков': 'pskov',
+    'мурманск': 'murmansk',
 }
 
 # --- УНИВЕРСАЛЬНЫЙ СЛОВАРЬ: ID направлений по названию города ---
@@ -59,6 +61,8 @@ CITY_TO_STATION_ID = {
     'весьегонск': 74988,
     'кострома': 54300, # только из Москвы на e-traffic
     'ярославль': 3298, # только из Москвы на e-traffic
+    'псков': 73707,
+    'мурманск': 118744, # только из Киркенес на e-traffic
 }
 def normalize_city_name(name: str) -> str:
     cleaned = re.split(r'\s*[*]+', name.strip())[0].lower()

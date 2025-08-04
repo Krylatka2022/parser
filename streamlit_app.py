@@ -6,6 +6,8 @@ from datetime import date, timedelta
 # Импорты парсеров (пока только busfor)
 from bus_parser.busfor import parse_busfor
 from bus_parser.etraffic import parse_e_traffic
+from bus_parser.tutu import parse_tutu
+
 
 # Импорт универсальной функции сохранения
 from utils.save_to_excel import save_to_excel
@@ -72,7 +74,9 @@ CITY_DISPLAY_MAP = {
     "Брянск": "Брянск ***", # только из Москвы на e-traffic
     "Весьегонск": "Весьегонск",
     "Кострома": "Кострома **",  # Только из Москвы на Busfor и на e-traffic
-    "Ярославль": "Ярославль **"  # Только из Москвы на Busfor и на e-traffic
+    "Ярославль": "Ярославль **",  # Только из Москвы на Busfor и на e-traffic
+    "Псков": "Псков",
+    'Мурманск': 'Мурманск', # только из Киркенес на e-traffic
 }
 
 # Создаем список для отображения (значения словаря)
@@ -107,8 +111,8 @@ search_date = st.sidebar.date_input("📅 Дата поездки", value=min_da
 # Выбор источников
 all_sources = {
     "busfor": "Busfor.ru",
-    'etraffic': 'e-traffic.ru',
-    # "tutu": "Tutu.ru (заглушка)",
+    'etraffic': 'E-traffic.ru',
+    "tutu": "Tutu.ru",
     # "avtovokzalspb": "AvtovokzalSPb.ru (заглушка)",
     # "sks-auto": "SKS-Auto.ru (заглушка)",
     # "mos_metro": "MosMetro.ru (заглушка)"
@@ -178,6 +182,19 @@ with col2:
                             status.update(label=f"E-Traffic: {len(res)} рейсов", state="complete", expanded=False)
                     except Exception as e:
                         st.error(f"Ошибка при парсинге E-Traffic: {str(e)}")
+
+                # Заглушки для других источников
+                if "tutu" in selected_sources:
+                    try:
+                        with st.status("Загрузка данных с Tutu...", expanded=True) as status:
+                            st.write("Подключение к Tutu...")
+                            res = parse_tutu(search_date_str, from_city, to_city)
+                            all_results.extend(res)
+                            st.write(f"Найдено {len(res)} рейсов")
+                            status.update(label=f"Tutu: {len(res)} рейсов", state="complete",
+                                          expanded=False)
+                    except Exception as e:
+                        st.error(f"Ошибка при парсинге Tutu: {str(e)}")
 
                 # if "avtovokzalspb" in selected_sources:
                 #     try:
