@@ -1,4 +1,6 @@
 # Виртуальные окружения
+user_data_*
+data/history.xlsx
 venv/
 env/
 __pycache__/
@@ -22,3 +24,4 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+
