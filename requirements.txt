@@ -1,9 +1,7 @@
-streamlit==1.36.0        # обновите Streamlit
-pandas==2.2.2            # ✅ новая стабильная версия
+streamlit==1.36.0
+pandas==2.2.2
 openpyxl==3.1.2
 beautifulsoup4==4.12.2
-
-# Для парсинга
 selenium
 webdriver-manager
 playwright==1.40.0

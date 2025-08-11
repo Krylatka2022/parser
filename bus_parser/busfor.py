@@ -6,7 +6,7 @@ import os
 from playwright.sync_api import sync_playwright
 import urllib.parse
 import re
-import pandas as pd
+# import pandas as pd
 from datetime import datetime
 from utils.save_to_excel import save_to_excel
 
