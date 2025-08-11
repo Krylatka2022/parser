@@ -1,5 +1,3 @@
-# parsers/bus_parser/avtovokzalspb.py
-
 import asyncio
 import sys
 import time
