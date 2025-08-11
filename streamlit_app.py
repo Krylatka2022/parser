@@ -7,6 +7,8 @@ from datetime import date, timedelta
 from bus_parser.busfor import parse_busfor
 from bus_parser.etraffic import parse_e_traffic
 from bus_parser.tutu import parse_tutu
+from bus_parser.avtovokzalspb import parse_avtovokzalspb
+
 
 
 # Импорт универсальной функции сохранения
@@ -113,7 +115,7 @@ all_sources = {
     "busfor": "Busfor.ru",
     'etraffic': 'E-traffic.ru',
     "tutu": "Tutu.ru",
-    # "avtovokzalspb": "AvtovokzalSPb.ru (заглушка)",
+    "avtovokzalspb": "AvtovokzalSPb.ru",
     # "sks-auto": "SKS-Auto.ru (заглушка)",
     # "mos_metro": "MosMetro.ru (заглушка)"
 }
@@ -196,27 +198,27 @@ with col2:
                     except Exception as e:
                         st.error(f"Ошибка при парсинге Tutu: {str(e)}")
 
-                # if "avtovokzalspb" in selected_sources:
-                #     try:
-                #         with st.status("Загрузка данных с AvtovokzalSPb...", expanded=True) as status:
-                #             st.write("Подключение к AvtovokzalSPb...")
-                #             res = parse_avtovokzalspb(search_date_str, from_city, to_city)
-                #             all_results.extend(res)
-                #             st.write(f"Найдено {len(res)} рейсов")
-                #             status.update(label=f"AvtovokzalSPb: {len(res)} рейсов", state="complete", expanded=False)
-                #     except Exception as e:
-                #         st.error(f"Ошибка при парсинге AvtovokzalSPb: {str(e)}")
+                if "avtovokzalspb" in selected_sources:
+                    try:
+                        with st.status("Загрузка данных с AvtovokzalSPb...", expanded=True) as status:
+                            st.write("Подключение к AvtovokzalSPb...")
+                            res = parse_avtovokzalspb(search_date_str, from_city, to_city)
+                            all_results.extend(res)
+                            st.write(f"Найдено {len(res)} рейсов")
+                            status.update(label=f"AvtovokzalSPb: {len(res)} рейсов", state="complete", expanded=False)
+                    except Exception as e:
+                        st.error(f"Ошибка при парсинге AvtovokzalSPb: {str(e)}")
 
-                # if "sks-auto" in selected_sources:
-                #     try:
-                #         with st.status("Загрузка данных с SKS-Auto...", expanded=True) as status:
-                #             st.write("Подключение к SKS-Auto...")
-                #             res = parse_sks_auto(search_date_str, from_city, to_city)
-                #             all_results.extend(res)
-                #             st.write(f"Найдено {len(res)} рейсов")
-                #             status.update(label=f"SKS-Auto: {len(res)} рейсов", state="complete", expanded=False)
-                #     except Exception as e:
-                #         st.error(f"Ошибка при парсинге SKS-Auto: {str(e)}")
+                if "sks-auto" in selected_sources:
+                    try:
+                        with st.status("Загрузка данных с SKS-Auto...", expanded=True) as status:
+                            st.write("Подключение к SKS-Auto...")
+                            res = parse_sks_auto(search_date_str, from_city, to_city)
+                            all_results.extend(res)
+                            st.write(f"Найдено {len(res)} рейсов")
+                            status.update(label=f"SKS-Auto: {len(res)} рейсов", state="complete", expanded=False)
+                    except Exception as e:
+                        st.error(f"Ошибка при парсинге SKS-Auto: {str(e)}")
 
                 # if "mosmetro" in selected_sources:
                 #     try:
