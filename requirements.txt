@@ -3,5 +3,4 @@ openpyxl==3.1.2
 beautifulsoup4==4.12.2
 selenium
 webdriver-manager
-playwright==1.40.0
 pandas==2.2.2

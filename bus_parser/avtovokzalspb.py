@@ -1,16 +1,371 @@
-import asyncio
-import sys
+# import asyncio
+# import sys
+# import time
+# import os
+# import re
+# from playwright.sync_api import sync_playwright
+# from datetime import datetime
+# from utils.save_to_excel import save_to_excel
+#
+#
+# # --- УСТАНОВКА ПОЛИТИКИ ЦИКЛА — САМАЯ ПЕРВАЯ СТРОКА ---
+# if sys.platform == "win32":
+#     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+#
+#
+# # Имя источника
+# SOURCE_NAME = "avtovokzalspb"
+#
+# # Базовый URL
+# BASE_URL = "https://avtovokzalspb.ru"
+#
+# # Словари для формирования URL
+# CITY_SLUGS = {
+#     'санкт-петербург': 'sankt-peterburg',
+#     'спб': 'sankt-peterburg',
+#     'москва': 'moskva',
+#     'мск': 'moskva',
+#     'ростов-на-дону': 'rostov-na-donu',
+#     'великий новгород': 'velikij-novgorod',
+#     'кириши': 'kirishi',
+#     'выборг': 'vqborg',
+#     'псков': 'pskov',
+#     'мурманск': 'murmansk',
+# }
+#
+#
+# # Коды автовокзалов: отправление и прибытие могут отличаться
+# DEPARTURE_CODES = {
+#     'санкт-петербург': 76844,  # Автовокзал 2 (Обводный канал)
+#     'москва': 32749,
+#     'казань': 75451,
+#     'сочи': 32804,
+#     'ростов-на-дону': 32787,
+#     'кириши': 37115,
+#     'екатеринбург': 25595,
+#     'новосибирск': 37914,
+#     'краснодар': 27362,
+#     'уфа': 77360,
+#     'красноярск': 27356,
+#     'владивосток': 000, # Нет на avtovokzal
+#     'рыбинск': 15069,
+#     'великий новгород': 37824,
+#     'нижний новгород': 32757,
+#     'волгоград': 24461,
+#     'воронеж': 32674,
+#     'смоленск': 15267,
+#     'брянск': 32662,
+#     'весьегонск': 14698,
+#     'кострома': 14506,
+#     'ярославль': 18244,
+#     'псков': 29976,
+#     'мурманск': 000, # Нет на avtovokzal
+#     'выборг': 24486,
+# }
+#
+# ARRIVAL_CODES = {
+#     'санкт-петербург': 76844,  # Автовокзал 2 (Обводный канал)
+#     'москва': 32749,
+#     'казань': 75451,
+#     'сочи': 32804,
+#     'ростов-на-дону': 32787,
+#     'кириши': 37115,
+#     'екатеринбург': 25595,
+#     'новосибирск': 37914,
+#     'краснодар': 27362,
+#     'уфа': 77360,
+#     'красноярск': 27356,
+#     'владивосток': 000, # Нет на avtovokzal
+#     'рыбинск': 15069,
+#     'великий новгород': 37824,
+#     'нижний новгород': 32757,
+#     'волгоград': 24461,
+#     'воронеж': 32674,
+#     'смоленск': 15267,
+#     'брянск': 32662,
+#     'весьегонск': 14698,
+#     'кострома': 14506,
+#     'ярославль': 18244,
+#     'псков': 29976,
+#     'мурманск': 000, # Нет на avtovokzal
+#     'выборг': 24486,
+# }
+#
+#
+# def normalize_city_name(name: str) -> str:
+#     """Нормализует название города."""
+#     cleaned = re.split(r'\s*[*]+', name.strip())[0].lower()
+#     replacements = {
+#         'спб': 'санкт-петербург',
+#         'мск': 'москва',
+#         'н.новгород': 'нижний новгород',
+#         'нижний н-д': 'нижний новгород',
+#     }
+#     return replacements.get(cleaned, cleaned)
+#
+#
+# def convert_date_format(date_str: str) -> str:
+#     """Конвертирует YYYY-MM-DD в DD.MM.YYYY"""
+#     try:
+#         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+#         return date_obj.strftime("%d.%m.%Y")
+#     except ValueError:
+#         print(f"❌ Неверный формат даты: {date_str}")
+#         return ""
+#
+#
+# def parse_avtovokzalspb(date: str, from_city: str, to_city: str) -> list[dict]:
+#     """
+#     Парсит расписание с avtovokzalspb.ru через прямой переход по динамическому URL.
+#     """
+#     results = []
+#     print(f"🚀 Начинаем парсинг {SOURCE_NAME}.ru для маршрута {from_city} → {to_city} на {date}")
+#
+#     # Нормализация городов
+#     from_city_norm = normalize_city_name(from_city)
+#     to_city_norm = normalize_city_name(to_city)
+#     print(f"    🏙️ Нормализованные города: {from_city_norm} → {to_city_norm}")
+#
+#     # Проверка на совпадение городов
+#     if from_city_norm == to_city_norm:
+#         print(f"⚠️ Город отправления и прибытия совпадают: {from_city_norm}. Пропускаем.")
+#         return results
+#
+#     # Получаем слаги
+#     from_slug = CITY_SLUGS.get(from_city_norm)
+#     to_slug = CITY_SLUGS.get(to_city_norm)
+#
+#     if not from_slug:
+#         print(f"❌ Неизвестный город отправления: {from_city_norm}")
+#         return results
+#     if not to_slug:
+#         print(f"❌ Неизвестный город прибытия: {to_city_norm}")
+#         return results
+#
+#     # Получаем коды автовокзалов
+#     departure_code = DEPARTURE_CODES.get(from_city_norm)
+#     arrival_code = ARRIVAL_CODES.get(to_city_norm)
+#
+#     if not departure_code:
+#         print(f"❌ Неизвестный код автовокзала отправления для: {from_city_norm}")
+#         return results
+#     if not arrival_code:
+#         print(f"❌ Неизвестный код автовокзала прибытия для: {to_city_norm}")
+#         return results
+#
+#     # Форматируем дату
+#     formatted_date = convert_date_format(date)
+#     if not formatted_date:
+#         return results
+#
+#     # Формируем URL
+#     url = f"{BASE_URL}/#/{from_slug}/{to_slug}?date={formatted_date}&departureBusStopCode={departure_code}&arrivalBusStopCode={arrival_code}"
+#     print(f"🌐 Формируем URL: {url}")
+#
+#     with sync_playwright() as p:
+#         browser = None
+#         try:
+#             # Путь к пользовательскому профилю
+#             user_data_dir = os.path.join(os.getcwd(), f"user_data_{SOURCE_NAME}")
+#             os.makedirs(user_data_dir, exist_ok=True)
+#             print(f"🔧 Используем профиль: {user_data_dir}")
+#
+#             # Запуск браузера
+#             browser = p.chromium.launch_persistent_context(
+#                 user_data_dir=user_data_dir,
+#                 headless=False,
+#                 args=[
+#                     '--no-sandbox',
+#                     '--disable-blink-features=AutomationControlled',
+#                     '--disable-extensions',
+#                     '--disable-web-security',
+#                     '--lang=ru-RU'
+#                 ],
+#                 viewport={"width": 1280, "height": 800},
+#                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+#             )
+#
+#             page = browser.pages[0]
+#             page.set_default_navigation_timeout(60000)
+#             page.set_default_timeout(30000)
+#
+#             # Анти-детект
+#             page.add_init_script("""
+#                 Object.defineProperty(navigator, 'webdriver', { get: () => false });
+#                 window.chrome = { runtime: {} };
+#                 Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
+#                 Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+#             """)
+#
+#             # Загружаем базовую страницу
+#             print("🌐 Загружаем базовую страницу...")
+#             page.goto(BASE_URL, wait_until="networkidle")
+#             time.sleep(2)
+#
+#             # Переходим по динамическому URL
+#             print("🌐 Переходим по динамическому URL...")
+#             page.goto(url)
+#
+#             # Ожидание загрузки данных
+#             print("⏳ Ожидание загрузки расписания...")
+#             try:
+#                 # Ждём изменения хэша
+#                 page.wait_for_function(
+#                     "() => window.location.hash.startsWith('#/') && window.location.href.includes('date=')",
+#                     timeout=30000
+#                 )
+#                 print("✅ URL обновлён")
+#
+#                 # Ждём появления контейнера с результатами
+#                 page.wait_for_selector(".bus-cards, .bus-was-found__title", timeout=20000)
+#
+#                 # Проверка: есть ли рейсы?
+#                 card_count = len(page.query_selector_all(".bus-card"))
+#                 if card_count == 0:
+#                     if page.locator("text=Рейсов не найдено").count() > 0 or \
+#                        page.locator("text=ничего не найдено").count() > 0:
+#                         print("ℹ️ Рейсов по данному направлению не найдено")
+#                         return results
+#                     raise TimeoutError("Контейнер найден, но карточки рейсов отсутствуют")
+#
+#                 print(f"✅ Найдено {card_count} рейсов")
+#
+#             except Exception as e:
+#                 print(f"❌ Не удалось дождаться данных: {e}")
+#                 _save_debug_page(page, SOURCE_NAME)
+#                 return results
+#
+#             # === ПАРСИНГ КАРТОЧЕК РЕЙСОВ ===
+#             cards = page.query_selector_all(".bus-card")
+#             print(f"📊 Начинаем парсинг {len(cards)} карточек...")
+#
+#             for idx, card in enumerate(cards, 1):
+#                 try:
+#                     # Время отправления
+#                     time_elem = card.query_selector(".bus-track-info__time")
+#                     time_text = time_elem.inner_text().strip() if time_elem else "N/A"
+#
+#                     # Номер рейса
+#                     trip_number = "N/A"
+#                     trip_value_elem = card.query_selector(".bus-carrier-info__value")
+#                     if trip_value_elem:
+#                         full_text = trip_value_elem.inner_text().strip()
+#                         match = re.search(r'\d+', full_text)
+#                         trip_number = match.group(0) if match else "N/A"
+#
+#                     # Перевозчик — используем locator и резервный поиск
+#                     carrier = "N/A"
+#                     try:
+#                         # Используем locator для поиска по тексту
+#                         label = card.locator("text=Перевозчик:")
+#                         if label.count() > 0:
+#                             # Ищем следующий span
+#                             value = label.locator("xpath=..//following-sibling::span")
+#                             if value.count() > 0:
+#                                 carrier = value.first.inner_text().strip()
+#                     except:
+#                         pass
+#
+#                     # Резерв: ищем по ключевым словам в .bus-carrier-info__value
+#                     if carrier == "N/A":
+#                         values = card.query_selector_all(".bus-carrier-info__value")
+#                         for el in values:
+#                             txt = el.inner_text().strip()
+#                             if any(kw in txt for kw in ["ООО", "АО", "ФТК", "Сотранс", "Круиз", "Транс", "Автотур", "ООО", "ИП"]):
+#                                 carrier = txt
+#                                 break
+#
+#                     # Цена
+#                     price_elem = card.query_selector(".bus-carrier-info__price-value")
+#                     price_text = price_elem.inner_text().strip() if price_elem else "0"
+#                     price = 0.0
+#                     try:
+#                         # Удаляем все кроме цифр и точки
+#                         clean_price = re.sub(r'[^\d.]', '', price_text)
+#                         price = float(clean_price) if clean_price else 0.0
+#                     except:
+#                         price = 0.0
+#
+#                     # Свободные места
+#                     free_seats = "N/A"
+#                     seats_elem = card.query_selector(".bus-carrier-info__text")
+#                     if seats_elem:
+#                         seats_text = seats_elem.inner_text().strip()
+#                         match = re.search(r'(\d+)', seats_text)
+#                         free_seats = match.group(1) if match else "N/A"
+#
+#                     total_seats = "N/A"
+#                     sold_tickets = "N/A"
+#
+#                     result = {
+#                         'time': time_text,
+#                         'trip_number': trip_number,
+#                         'departure_point': from_city,
+#                         'arrival_point': to_city,
+#                         'carrier': carrier,
+#                         'total_seats': total_seats,
+#                         'free_seats': free_seats,
+#                         'sold_tickets': sold_tickets,
+#                         'price': price,
+#                         'source': SOURCE_NAME
+#                     }
+#
+#                     results.append(result)
+#                     print(f"  ✅ Рейс {idx}: {time_text} | {carrier} | {price} ₽ | {free_seats} мест")
+#
+#                 except Exception as e:
+#                     print(f"  ⚠️ Ошибка при парсинге карточки {idx}: {e}")
+#                     continue
+#
+#         except Exception as e:
+#             print(f"❌ Ошибка при выполнении: {e}")
+#             _save_debug_page(page, SOURCE_NAME)
+#         finally:
+#             if browser:
+#                 browser.close()
+#                 print("🔒 Браузер закрыт")
+#
+#     # Сохранение в Excel
+#     if results:
+#         excel_filename = "data/history.xlsx"
+#         save_to_excel(results, filename=excel_filename, search_date=date)
+#         print(f"✅ Результаты сохранены: {len(results)} рейсов")
+#
+#     print(f"🏁 Парсинг {SOURCE_NAME} завершён. Обработано {len(results)} рейсов.")
+#     return results
+#
+#
+# def _save_debug_page(page, source: str):
+#     """Сохраняет HTML для отладки"""
+#     try:
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         filename = f"data/debug_{source}_{timestamp}.html"
+#         os.makedirs("data", exist_ok=True)
+#         with open(filename, "w", encoding="utf-8") as f:
+#             f.write(page.content())
+#         print(f"💾 Сохранён дебаг-файл: {filename}")
+#     except Exception as e:
+#         print(f"⚠️ Ошибка при сохранении дебаг-файла: {e}")
+
+import re
 import time
 import os
-import re
-from playwright.sync_api import sync_playwright
 from datetime import datetime
-from utils.save_to_excel import save_to_excel
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from selenium.webdriver.common.action_chains import ActionChains
+from webdriver_manager.chrome import ChromeDriverManager
 
-
-# --- УСТАНОВКА ПОЛИТИКИ ЦИКЛА — САМАЯ ПЕРВАЯ СТРОКА ---
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+# Импортируем утилиту сохранения
+try:
+    from utils.save_to_excel import save_to_excel
+except ImportError:
+    print("⚠️ Модуль save_to_excel не найден. Сохранение отключено.")
+    save_to_excel = None
 
 
 # Имя источника
@@ -33,10 +388,9 @@ CITY_SLUGS = {
     'мурманск': 'murmansk',
 }
 
-
-# Коды автовокзалов: отправление и прибытие могут отличаться
+# Коды автовокзалов
 DEPARTURE_CODES = {
-    'санкт-петербург': 76844,  # Автовокзал 2 (Обводный канал)
+    'санкт-петербург': 76844,
     'москва': 32749,
     'казань': 75451,
     'сочи': 32804,
@@ -47,7 +401,7 @@ DEPARTURE_CODES = {
     'краснодар': 27362,
     'уфа': 77360,
     'красноярск': 27356,
-    'владивосток': 000, # Нет на avtovokzal
+    'владивосток': 0,
     'рыбинск': 15069,
     'великий новгород': 37824,
     'нижний новгород': 32757,
@@ -59,12 +413,12 @@ DEPARTURE_CODES = {
     'кострома': 14506,
     'ярославль': 18244,
     'псков': 29976,
-    'мурманск': 000, # Нет на avtovokzal
+    'мурманск': 0,
     'выборг': 24486,
 }
 
 ARRIVAL_CODES = {
-    'санкт-петербург': 76844,  # Автовокзал 2 (Обводный канал)
+    'санкт-петербург': 76844,
     'москва': 32749,
     'казань': 75451,
     'сочи': 32804,
@@ -75,7 +429,7 @@ ARRIVAL_CODES = {
     'краснодар': 27362,
     'уфа': 77360,
     'красноярск': 27356,
-    'владивосток': 000, # Нет на avtovokzal
+    'владивосток': 0,
     'рыбинск': 15069,
     'великий новгород': 37824,
     'нижний новгород': 32757,
@@ -87,7 +441,7 @@ ARRIVAL_CODES = {
     'кострома': 14506,
     'ярославль': 18244,
     'псков': 29976,
-    'мурманск': 000, # Нет на avtovokzal
+    'мурманск': 0,
     'выборг': 24486,
 }
 
@@ -114,9 +468,20 @@ def convert_date_format(date_str: str) -> str:
         return ""
 
 
+def safe_get_text(element, selector):
+    """Безопасное получение текста из элемента."""
+    try:
+        el = element.find_element(By.CSS_SELECTOR, selector)
+        return el.text.strip()
+    except (NoSuchElementException, StaleElementReferenceException):
+        return "N/A"
+    except Exception:
+        return "N/A"
+
+
 def parse_avtovokzalspb(date: str, from_city: str, to_city: str) -> list[dict]:
     """
-    Парсит расписание с avtovokzalspb.ru через прямой переход по динамическому URL.
+    Парсит расписание с avtovokzalspb.ru (Selenium версия)
     """
     results = []
     print(f"🚀 Начинаем парсинг {SOURCE_NAME}.ru для маршрута {from_city} → {to_city} на {date}")
@@ -126,15 +491,14 @@ def parse_avtovokzalspb(date: str, from_city: str, to_city: str) -> list[dict]:
     to_city_norm = normalize_city_name(to_city)
     print(f"    🏙️ Нормализованные города: {from_city_norm} → {to_city_norm}")
 
-    # Проверка на совпадение городов
+    # Проверка на совпадение
     if from_city_norm == to_city_norm:
-        print(f"⚠️ Город отправления и прибытия совпадают: {from_city_norm}. Пропускаем.")
+        print(f"⚠️ Города совпадают: {from_city_norm}. Пропускаем.")
         return results
 
     # Получаем слаги
     from_slug = CITY_SLUGS.get(from_city_norm)
     to_slug = CITY_SLUGS.get(to_city_norm)
-
     if not from_slug:
         print(f"❌ Неизвестный город отправления: {from_city_norm}")
         return results
@@ -145,12 +509,8 @@ def parse_avtovokzalspb(date: str, from_city: str, to_city: str) -> list[dict]:
     # Получаем коды автовокзалов
     departure_code = DEPARTURE_CODES.get(from_city_norm)
     arrival_code = ARRIVAL_CODES.get(to_city_norm)
-
-    if not departure_code:
-        print(f"❌ Неизвестный код автовокзала отправления для: {from_city_norm}")
-        return results
-    if not arrival_code:
-        print(f"❌ Неизвестный код автовокзала прибытия для: {to_city_norm}")
+    if not departure_code or not arrival_code:
+        print(f"❌ Неизвестные коды автовокзалов для {from_city_norm} → {to_city_norm}")
         return results
 
     # Форматируем дату
@@ -162,187 +522,185 @@ def parse_avtovokzalspb(date: str, from_city: str, to_city: str) -> list[dict]:
     url = f"{BASE_URL}/#/{from_slug}/{to_slug}?date={formatted_date}&departureBusStopCode={departure_code}&arrivalBusStopCode={arrival_code}"
     print(f"🌐 Формируем URL: {url}")
 
-    with sync_playwright() as p:
-        browser = None
-        try:
-            # Путь к пользовательскому профилю
-            user_data_dir = os.path.join(os.getcwd(), f"user_data_{SOURCE_NAME}")
-            os.makedirs(user_data_dir, exist_ok=True)
-            print(f"🔧 Используем профиль: {user_data_dir}")
+    # Настройка Chrome
+    chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-web-security")
+    chrome_options.add_argument("--allow-running-insecure-content")
+    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+    chrome_options.add_argument("--window-size=1280,800")
+    chrome_options.add_argument("--lang=ru-RU")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
-            # Запуск браузера
-            browser = p.chromium.launch_persistent_context(
-                user_data_dir=user_data_dir,
-                headless=False,
-                args=[
-                    '--no-sandbox',
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-extensions',
-                    '--disable-web-security',
-                    '--lang=ru-RU'
-                ],
-                viewport={"width": 1280, "height": 800},
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            )
+    # Путь к профилю
+    user_data_dir = os.path.join(os.getcwd(), f"user_data_{SOURCE_NAME}")
+    os.makedirs(user_data_dir, exist_ok=True)
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    print(f"🔧 Используем профиль: {user_data_dir}")
 
-            page = browser.pages[0]
-            page.set_default_navigation_timeout(60000)
-            page.set_default_timeout(30000)
+    # Запуск браузера
+    driver = webdriver.Chrome(options=chrome_options)
+    wait = WebDriverWait(driver, 30)
+    actions = ActionChains(driver)
 
-            # Анти-детект
-            page.add_init_script("""
+    try:
+        # Анти-детект JavaScript
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
                 Object.defineProperty(navigator, 'webdriver', { get: () => false });
                 window.chrome = { runtime: {} };
                 Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru', 'en-US', 'en'] });
                 Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-            """)
+            """
+        })
 
-            # Загружаем базовую страницу
-            print("🌐 Загружаем базовую страницу...")
-            page.goto(BASE_URL, wait_until="networkidle")
-            time.sleep(2)
+        # Загружаем базовую страницу
+        print("🌐 Загружаем базовую страницу...")
+        driver.get(BASE_URL)
+        time.sleep(2)
 
-            # Переходим по динамическому URL
-            print("🌐 Переходим по динамическому URL...")
-            page.goto(url)
+        # Переходим по динамическому URL
+        print("🌐 Переходим по динамическому URL...")
+        driver.get(url)
 
-            # Ожидание загрузки данных
-            print("⏳ Ожидание загрузки расписания...")
-            try:
-                # Ждём изменения хэша
-                page.wait_for_function(
-                    "() => window.location.hash.startsWith('#/') && window.location.href.includes('date=')",
-                    timeout=30000
-                )
-                print("✅ URL обновлён")
+        # Ожидание загрузки расписания
+        print("⏳ Ожидание загрузки расписания...")
 
-                # Ждём появления контейнера с результатами
-                page.wait_for_selector(".bus-cards, .bus-was-found__title", timeout=20000)
+        try:
+            # Ждём появления контейнера с карточками
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".bus-cards, .bus-was-found__title")))
+            time.sleep(2)  # Дополнительная задержка для стабилизации
 
-                # Проверка: есть ли рейсы?
-                card_count = len(page.query_selector_all(".bus-card"))
-                if card_count == 0:
-                    if page.locator("text=Рейсов не найдено").count() > 0 or \
-                       page.locator("text=ничего не найдено").count() > 0:
-                        print("ℹ️ Рейсов по данному направлению не найдено")
-                        return results
-                    raise TimeoutError("Контейнер найден, но карточки рейсов отсутствуют")
-
-                print(f"✅ Найдено {card_count} рейсов")
-
-            except Exception as e:
-                print(f"❌ Не удалось дождаться данных: {e}")
-                _save_debug_page(page, SOURCE_NAME)
+            # Проверка: есть ли рейсы?
+            if "Рейсов не найдено" in driver.page_source or "ничего не найдено" in driver.page_source:
+                print("ℹ️ Рейсов не найдено")
                 return results
 
-            # === ПАРСИНГ КАРТОЧЕК РЕЙСОВ ===
-            cards = page.query_selector_all(".bus-card")
-            print(f"📊 Начинаем парсинг {len(cards)} карточек...")
+            # Получаем карточки
+            cards = driver.find_elements(By.CSS_SELECTOR, ".bus-card")
+            print(f"✅ Найдено {len(cards)} рейсов")
 
-            for idx, card in enumerate(cards, 1):
+            if len(cards) == 0:
+                print("❌ Карточки рейсов не загрузились")
+                return results
+
+        except TimeoutException:
+            print("❌ Не удалось дождаться загрузки расписания")
+            _save_debug_page(driver, SOURCE_NAME)
+            return results
+
+        # === ПАРСИНГ КАРТОЧЕК ===
+        print(f"📊 Начинаем парсинг {len(cards)} карточек...")
+
+        for idx, card in enumerate(cards, 1):
+            try:
+                # Время отправления
+                time_text = safe_get_text(card, ".bus-track-info__time") or "N/A"
+
+                # Номер рейса
+                trip_number = "N/A"
+                trip_value = safe_get_text(card, ".bus-carrier-info__value")
+                if trip_value:
+                    match = re.search(r'\d+', trip_value)
+                    trip_number = match.group(0) if match else "N/A"
+
+                # Перевозчик
+                carrier = "N/A"
+                # Ищем по структуре "Перевозчик: <span>..."
                 try:
-                    # Время отправления
-                    time_elem = card.query_selector(".bus-track-info__time")
-                    time_text = time_elem.inner_text().strip() if time_elem else "N/A"
+                    label = card.find_element(By.XPATH, ".//*[contains(text(), 'Перевозчик:')]")
+                    value = label.find_element(By.XPATH, "./following-sibling::span")
+                    carrier = value.text.strip()
+                except:
+                    pass
 
-                    # Номер рейса
-                    trip_number = "N/A"
-                    trip_value_elem = card.query_selector(".bus-carrier-info__value")
-                    if trip_value_elem:
-                        full_text = trip_value_elem.inner_text().strip()
-                        match = re.search(r'\d+', full_text)
-                        trip_number = match.group(0) if match else "N/A"
+                # Резерв: ищем по ключевым словам
+                if carrier == "N/A":
+                    values = card.find_elements(By.CSS_SELECTOR, ".bus-carrier-info__value")
+                    for el in values:
+                        txt = el.text.strip()
+                        if any(kw in txt for kw in ["ООО", "АО", "ФТК", "Сотранс", "Круиз", "Транс", "Автотур", "ИП"]):
+                            carrier = txt
+                            break
 
-                    # Перевозчик — используем locator и резервный поиск
-                    carrier = "N/A"
-                    try:
-                        # Используем locator для поиска по тексту
-                        label = card.locator("text=Перевозчик:")
-                        if label.count() > 0:
-                            # Ищем следующий span
-                            value = label.locator("xpath=..//following-sibling::span")
-                            if value.count() > 0:
-                                carrier = value.first.inner_text().strip()
-                    except:
-                        pass
-
-                    # Резерв: ищем по ключевым словам в .bus-carrier-info__value
-                    if carrier == "N/A":
-                        values = card.query_selector_all(".bus-carrier-info__value")
-                        for el in values:
-                            txt = el.inner_text().strip()
-                            if any(kw in txt for kw in ["ООО", "АО", "ФТК", "Сотранс", "Круиз", "Транс", "Автотур", "ООО", "ИП"]):
-                                carrier = txt
-                                break
-
-                    # Цена
-                    price_elem = card.query_selector(".bus-carrier-info__price-value")
-                    price_text = price_elem.inner_text().strip() if price_elem else "0"
+                # Цена
+                price_text = safe_get_text(card, ".bus-carrier-info__price-value") or "0"
+                price = 0.0
+                try:
+                    clean_price = re.sub(r'[^\d.]', '', price_text)
+                    price = float(clean_price) if clean_price else 0.0
+                except:
                     price = 0.0
-                    try:
-                        # Удаляем все кроме цифр и точки
-                        clean_price = re.sub(r'[^\d.]', '', price_text)
-                        price = float(clean_price) if clean_price else 0.0
-                    except:
-                        price = 0.0
 
-                    # Свободные места
-                    free_seats = "N/A"
-                    seats_elem = card.query_selector(".bus-carrier-info__text")
-                    if seats_elem:
-                        seats_text = seats_elem.inner_text().strip()
-                        match = re.search(r'(\d+)', seats_text)
-                        free_seats = match.group(1) if match else "N/A"
+                # Свободные места
+                free_seats = "N/A"
+                seats_text = safe_get_text(card, ".bus-carrier-info__text") or ""
+                match = re.search(r'(\d+)', seats_text)
+                free_seats = match.group(1) if match else "N/A"
 
-                    total_seats = "N/A"
-                    sold_tickets = "N/A"
+                total_seats = "N/A"
+                sold_tickets = "N/A"
 
-                    result = {
-                        'time': time_text,
-                        'trip_number': trip_number,
-                        'departure_point': from_city,
-                        'arrival_point': to_city,
-                        'carrier': carrier,
-                        'total_seats': total_seats,
-                        'free_seats': free_seats,
-                        'sold_tickets': sold_tickets,
-                        'price': price,
-                        'source': SOURCE_NAME
-                    }
+                result = {
+                    'time': time_text,
+                    'trip_number': trip_number,
+                    'departure_point': from_city,
+                    'arrival_point': to_city,
+                    'carrier': carrier,
+                    'total_seats': total_seats,
+                    'free_seats': free_seats,
+                    'sold_tickets': sold_tickets,
+                    'price': price,
+                    'source': SOURCE_NAME
+                }
 
-                    results.append(result)
-                    print(f"  ✅ Рейс {idx}: {time_text} | {carrier} | {price} ₽ | {free_seats} мест")
+                results.append(result)
+                print(f"  ✅ Рейс {idx}: {time_text} | {carrier} | {price} ₽ | {free_seats} мест")
 
-                except Exception as e:
-                    print(f"  ⚠️ Ошибка при парсинге карточки {idx}: {e}")
-                    continue
+            except StaleElementReferenceException:
+                print(f"  ⚠️ Элемент устарел, пропускаем карточку {idx}")
+                continue
+            except Exception as e:
+                print(f"  ⚠️ Ошибка при парсинге карточки {idx}: {e}")
+                continue
 
-        except Exception as e:
-            print(f"❌ Ошибка при выполнении: {e}")
-            _save_debug_page(page, SOURCE_NAME)
-        finally:
-            if browser:
-                browser.close()
-                print("🔒 Браузер закрыт")
+    except Exception as e:
+        print(f"❌ Ошибка при выполнении: {e}")
+        _save_debug_page(driver, SOURCE_NAME)
+    finally:
+        try:
+            driver.quit()
+        except:
+            pass
+        print("🔒 Браузер закрыт")
 
     # Сохранение в Excel
-    if results:
-        excel_filename = "data/history.xlsx"
-        save_to_excel(results, filename=excel_filename, search_date=date)
-        print(f"✅ Результаты сохранены: {len(results)} рейсов")
+    if results and save_to_excel:
+        try:
+            excel_filename = "data/history.xlsx"
+            save_to_excel(results, filename=excel_filename, search_date=date)
+            print(f"✅ Результаты сохранены: {len(results)} рейсов")
+        except Exception as e:
+            print(f"❌ Ошибка при сохранении в Excel: {e}")
 
     print(f"🏁 Парсинг {SOURCE_NAME} завершён. Обработано {len(results)} рейсов.")
     return results
 
 
-def _save_debug_page(page, source: str):
+def _save_debug_page(driver, source: str):
     """Сохраняет HTML для отладки"""
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"data/debug_{source}_{timestamp}.html"
         os.makedirs("data", exist_ok=True)
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(page.content())
+            f.write(driver.page_source)
         print(f"💾 Сохранён дебаг-файл: {filename}")
     except Exception as e:
         print(f"⚠️ Ошибка при сохранении дебаг-файла: {e}")
