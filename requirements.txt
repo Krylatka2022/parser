@@ -5,3 +5,4 @@ selenium
 webdriver-manager
 playwright==1.40.0
 modin[all]==0.29.1
+pandas==2.2.2
