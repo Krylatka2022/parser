@@ -9,7 +9,24 @@ from bus_parser.etraffic import parse_e_traffic
 from bus_parser.tutu import parse_tutu
 from bus_parser.avtovokzalspb import parse_avtovokzalspb
 
+# --- ТЕСТ: Проверка импортов ---
+try:
+    import selenium
+    st.write("✅ Selenium найден")
+except ImportError as e:
+    st.write(f"❌ Ошибка импорта selenium: {e}")
 
+try:
+    from selenium import webdriver
+    st.write("✅ Webdriver импортирован")
+except ImportError as e:
+    st.write(f"❌ Ошибка импорта webdriver: {e}")
+
+try:
+    from webdriver_manager.chrome import ChromeDriverManager
+    st.write("✅ ChromeDriverManager найден")
+except ImportError as e:
+    st.write(f"❌ Ошибка импорта ChromeDriverManager: {e}")
 
 # Импорт универсальной функции сохранения
 from utils.save_to_excel import save_to_excel
